@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f1720">
+<title>NYBCI Investor Pulse</title>
+<style>
+  :root {
+    --bg: #f6f5f1; --card: #ffffff; --ink: #14181d; --muted: #5d6670; --line: #dcd9d2;
+    --accent: #2f5d8a; --accent-ink: #ffffff; --rec: #c2352b; --ok: #2e7d4f; --warn: #a2650b;
+    --chip: #eef0f2; --chip-on: #2f5d8a; --chip-on-ink: #fff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1720; --card: #17212b; --ink: #e9edf1; --muted: #9aa6b2; --line: #2a3643;
+      --accent: #7fb0de; --accent-ink: #0f1720; --rec: #ef6a60; --ok: #6cc592; --warn: #e3a94b;
+      --chip: #22303d; --chip-on: #7fb0de; --chip-on-ink: #0f1720;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--bg);
+    padding: calc(env(safe-area-inset-top) + 12px) 16px 10px; border-bottom: 1px solid var(--line); }
+  .brand { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .brand b { font-size: 15px; letter-spacing: .02em; }
+  .brand small { color: var(--muted); font-size: 13px; }
+  .progress { height: 4px; background: var(--line); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+  .progress i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .25s; }
+  .banner { margin-top: 8px; font-size: 13px; padding: 6px 10px; border-radius: 8px;
+    background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--ink); display: none; }
+  .banner button { margin-left: 6px; }
+  main { max-width: 560px; margin: 0 auto; padding: 16px 16px calc(env(safe-area-inset-bottom) + 110px); }
+  section { display: none; }
+  section.on { display: block; }
+  h1 { font-size: 24px; line-height: 1.2; margin: 6px 0 10px; }
+  h2 { font-size: 20px; line-height: 1.25; margin: 4px 0 6px; }
+  .kicker { color: var(--accent); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+  .sub { color: var(--muted); margin: 0 0 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin: 12px 0; }
+  label.f { display: block; font-size: 14px; font-weight: 600; margin: 12px 0 6px; }
+  label.f span { color: var(--muted); font-weight: 400; }
+  input[type=text], input[type=email], textarea {
+    width: 100%; font: inherit; color: var(--ink); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; }
+  textarea { min-height: 84px; resize: vertical; }
+  input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { border: 1px solid var(--line); background: var(--chip); color: var(--ink);
+    border-radius: 999px; padding: 9px 14px; font: inherit; font-size: 15px; cursor: pointer; }
+  .chip[aria-pressed=true] { background: var(--chip-on); color: var(--chip-on-ink); border-color: var(--chip-on); }
+  .scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .scale .chip { padding: 10px 0; text-align: center; border-radius: 10px; }
+  .scale-ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .rec { display: flex; align-items: center; gap: 12px; }
+  .recbtn { flex: none; width: 64px; height: 64px; border-radius: 50%; border: 0; cursor: pointer;
+    background: var(--rec); color: #fff; font-size: 13px; font-weight: 700; }
+  .recbtn.live { animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--rec) 50%, transparent); }
+    50% { box-shadow: 0 0 0 10px transparent; } }
+  .recinfo { flex: 1; min-width: 0; font-size: 14px; color: var(--muted); }
+  .recinfo strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .recinfo audio { width: 100%; margin-top: 6px; height: 36px; }
+  .link { background: none; border: 0; color: var(--accent); font: inherit; font-size: 14px; padding: 4px 0; cursor: pointer; }
+  .hint { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  footer { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg); border-top: 1px solid var(--line);
+    padding: 10px 16px calc(env(safe-area-inset-bottom) + 10px); }
+  footer .row { max-width: 560px; margin: 0 auto; display: flex; gap: 10px; }
+  .btn { flex: 1; font: inherit; font-weight: 600; border-radius: 12px; padding: 14px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn[disabled] { opacity: .5; }
+  .done { text-align: center; padding-top: 40px; }
+  .done .big { font-size: 48px; }
+  .status-ok { color: var(--ok); } .status-warn { color: var(--warn); }
+  .mode-tag { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--chip); color: var(--muted); }
+  .err { color: var(--rec); font-size: 14px; margin-top: 8px; min-height: 1em; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><b>NYBCI · Investor Pulse</b><small><span class="mode-tag" id="modeTag"></span> <span id="stepLabel"></span></small></div>
+  <div class="progress"><i id="bar"></i></div>
+  <div class="banner" id="outboxBanner"><span id="outboxText"></span><button class="link" id="retryBtn">Retry now</button></div>
+</header>
+
+<main>
+  <!-- 0: intro -->
+  <section data-step="intro">
+    <div class="kicker">Neurotech Futures · NYBCI 2026</div>
+    <h1>How investable is BCI right now?</h1>
+    <p class="sub">Four quick questions, about 3–4 minutes. Tap an answer, then talk or type. Voice is fine — we'll transcribe.</p>
+    <div class="card" id="interviewerCard" hidden>
+      <label class="f" for="interviewer">Interviewer</label>
+      <input type="text" id="interviewer" data-k="interviewer" autocomplete="name" placeholder="Your name">
+    </div>
+    <div class="card">
+      <label class="f">How may we use your answers?</label>
+      <div class="chips" data-single="attribution">
+        <button class="chip" type="button">Quote me by name</button>
+        <button class="chip" type="button">Quote me anonymously</button>
+        <button class="chip" type="button">Background only</button>
+      </div>
+      <p class="hint">You can change this later by emailing us.</p>
+    </div>
+  </section>
+
+  <!-- 1: about -->
+  <section data-step="about">
+    <div class="kicker">About you</div>
+    <h2>A little background</h2>
+    <div class="card">
+      <label class="f" for="name">Name</label>
+      <input type="text" id="name" data-k="name" autocomplete="name">
+      <label class="f" for="email">Email</label>
+      <input type="email" id="email" data-k="email" autocomplete="email" inputmode="email">
+      <label class="f" for="firm">Firm & role <span>(optional)</span></label>
+      <input type="text" id="firm" data-k="firm" autocomplete="organization">
+      <label class="f">Investor type</label>
+      <div class="chips" data-single="investorType">
+        <button class="chip" type="button">VC</button>
+        <button class="chip" type="button">Corporate VC</button>
+        <button class="chip" type="button">Angel</button>
+        <button class="chip" type="button">Family office</button>
+        <button class="chip" type="button">Strategic</button>
+        <button class="chip" type="button">Other</button>
+      </div>
+      <label class="f">Have you invested in a BCI company?</label>
+      <div class="chips" data-single="bciInvestor">
+        <button class="chip" type="button">Yes</button>
+        <button class="chip" type="button">Not yet</button>
+      </div>
+      <label class="f" for="companies">If so, which? <span>(optional)</span></label>
+      <input type="text" id="companies" data-k="companies" placeholder="e.g. company names">
+    </div>
+  </section>
+
+  <!-- 2: Q1 -->
+  <section data-step="q1">
+    <div class="kicker">Question 1 of 4 · Early stage</div>
+    <h2>Is there investor appetite for new BCI startups (pre-Series A)?</h2>
+    <div class="card">
+      <label class="f">Compared with 12 months ago, appetite is…</label>
+      <div class="chips" data-single="q1_choice">
+        <button class="chip" type="button">Higher</button>
+        <button class="chip" type="button">About the same</button>
+        <button class="chip" type="button">Lower</button>
+        <button class="chip" type="button">Not sure</button>
+      </div>
+    </div>
+    <div class="card"><label class="f">Why? <span>(talk or type)</span></label><div data-rec="q1"></div>
+      <textarea data-k="q1_text" placeholder="Or type here"></textarea></div>
+  </section>
+
+  <!-- 3: Q2 -->
+  <section data-step="q2">
+    <div class="kicker">Question 2 of 4 · Growth stage</div>
+    <h2>What do you make of 9-figure rounds for implanted BCI companies?</h2>
+    <div class="card">
+      <label class="f">Are those valuations justified today?</label>
+      <div class="chips" data-single="q2_choice">
+        <button class="chip" type="button">Yes</button>
+        <button class="chip" type="button">Too early</button>
+        <button class="chip" type="button">No</button>
+        <button class="chip" type="button">Depends</button>
+      </div>
+      <label class="f">What would you need to see to join one? <span>(pick any)</span></label>
+      <div class="chips" data-multi="q2_needs">
+        <button class="chip" type="button">Human implant data</button>
+        <button class="chip" type="button">FDA IDE / pivotal trial</button>
+        <button class="chip" type="button">Long-term safety</button>
+        <button class="chip" type="button">Reimbursement path</button>
+        <button class="chip" type="button">Revenue</button>
+        <button class="chip" type="button">Strategic partner</button>
+        <button class="chip" type="button">Team track record</button>
+      </div>
+    </div>
+    <div class="card"><label class="f">Any specific deals that jump out?</label><div data-rec="q2"></div>
+      <textarea data-k="q2_text" placeholder="Or type here"></textarea></div>
+  </section>
+
+  <!-- 4: Q3 -->
+  <section data-step="q3">
+    <div class="kicker">Question 3 of 4 · Headwinds & tailwinds</div>
+    <h2>How investable is each, and where does AI acceleration fit?</h2>
+    <div class="card">
+      <label class="f">Implanted BCI</label>
+      <div class="scale" data-single="q3_invasive">
+        <button class="chip" type="button">1</button><button class="chip" type="button">2</button>
+        <button class="chip" type="button">3</button><button class="chip" type="button">4</button>
+        <button class="chip" type="button">5</button>
+      </div>
+      <div class="scale-ends"><span>Not investable</span><span>Very investable</span></div>
+      <label class="f">Non-invasive BCI</label>
+      <div class="scale" data-single="q3_noninvasive">
+        <button class="chip" type="button">1</button><button class="chip" type="button">2</button>
+        <button class="chip" type="button">3</button><button class="chip" type="button">4</button>
+        <button class="chip" type="button">5</button>
+      </div>
+      <div class="scale-ends"><span>Not investable</span><span>Very investable</span></div>
+    </div>
+    <div class="card"><label class="f">Biggest headwinds and tailwinds? How does AI change the picture?</label><div data-rec="q3"></div>
+      <textarea data-k="q3_text" placeholder="Or type here"></textarea></div>
+  </section>
+
+  <!-- 5: Q4 -->
+  <section data-step="q4">
+    <div class="kicker">Question 4 of 4 · Open</div>
+    <h2>Anything else? One company to watch, one prediction for the next 12 months.</h2>
+    <div class="card"><div data-rec="q4"></div>
+      <textarea data-k="q4_text" placeholder="Or type here"></textarea></div>
+    <div class="card">
+      <label class="f">Want the results when they're out?</label>
+      <div class="chips" data-single="followup">
+        <button class="chip" type="button">Yes, send them</button>
+        <button class="chip" type="button">No thanks</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6: done -->
+  <section data-step="done">
+    <div class="done">
+      <div class="big">✓</div>
+      <h1>Thank you!</h1>
+      <p class="sub" id="doneStatus"></p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="row">
+    <button class="btn" id="backBtn" type="button">Back</button>
+    <button class="btn primary" id="nextBtn" type="button">Start</button>
+  </div>
+  <div class="err" id="err" style="text-align:center"></div>
+</footer>
+
+<script>
+/* ================== CONFIG ================== */
+// Paste your Apps Script web-app URL (ends in /exec) here:
+const ENDPOINT = 'https://script.google.com/macros/s/AKfycbz6Ku_dEC_HO3DbJ8-JU8u2-f_IydSYlNT-T7_F-hxgB0qhSczUqMihYsY1IKrO1NTY/exec';
+const MAX_SECONDS = 120;          // per voice clip
+/* ============================================ */
+
+const params = new URLSearchParams(location.search);
+const MODE = params.get('mode') === 'interviewer' ? 'interviewer' : 'self';
+const STEPS = ['intro', 'about', 'q1', 'q2', 'q3', 'q4', 'done'];
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+let step = 0;
+let state = freshState();
+const clips = {};   // q -> {blob, mime, url}
+
+function freshState() {
+  return { id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)),
+           startedAt: new Date().toISOString(), answers: { q2_needs: [] } };
+}
+
+/* ---------- storage helpers (all wrapped; page works without them) ---------- */
+const ls = {
+  get(k) { try { return localStorage.getItem(k); } catch (_) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (_) {} }
+};
+function idb() {
+  return new Promise((res, rej) => {
+    try {
+      const r = indexedDB.open('nybci-survey', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('outbox', { keyPath: 'id' });
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    } catch (e) { rej(e); }
+  });
+}
+async function outboxOp(mode, fn) {
+  const db = await idb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction('outbox', mode);
+    const out = fn(tx.objectStore('outbox'));
+    tx.oncomplete = () => res(out && out.result);
+    tx.onerror = () => rej(tx.error);
+  });
+}
+const outboxPut = item => outboxOp('readwrite', s => s.put(item)).catch(() => {});
+const outboxDel = id => outboxOp('readwrite', s => s.delete(id)).catch(() => {});
+const outboxAll = () => outboxOp('readonly', s => s.getAll()).catch(() => []);
+
+/* ---------- UI wiring ---------- */
+function bindInputs() {
+  $$('[data-k]').forEach(el => {
+    el.addEventListener('input', () => { state.answers[el.dataset.k] = el.value.trim(); });
+  });
+  $$('[data-single]').forEach(group => {
+    const key = group.dataset.single;
+    $$('.chip', group).forEach(chip => {
+      chip.setAttribute('aria-pressed', 'false');
+      chip.addEventListener('click', () => {
+        const was = chip.getAttribute('aria-pressed') === 'true';
+        $$('.chip', group).forEach(c => c.setAttribute('aria-pressed', 'false'));
+        chip.setAttribute('aria-pressed', String(!was));
+        state.answers[key] = was ? '' : chip.textContent.trim();
+      });
+    });
+  });
+  $$('[data-multi]').forEach(group => {
+    const key = group.dataset.multi;
+    $$('.chip', group).forEach(chip => {
+      chip.setAttribute('aria-pressed', 'false');
+      chip.addEventListener('click', () => {
+        const on = chip.getAttribute('aria-pressed') !== 'true';
+        chip.setAttribute('aria-pressed', String(on));
+        const v = chip.textContent.trim();
+        const set = new Set(state.answers[key] || []);
+        on ? set.add(v) : set.delete(v);
+        state.answers[key] = Array.from(set);
+      });
+    });
+  });
+  $$('[data-rec]').forEach(host => buildRecorder(host, host.dataset.rec));
+}
+
+function resetForm() {
+  state = freshState();
+  Object.keys(clips).forEach(q => { URL.revokeObjectURL(clips[q].url); delete clips[q]; });
+  $$('[data-k]').forEach(el => { if (el.dataset.k !== 'interviewer') el.value = ''; });
+  $$('.chip').forEach(c => c.setAttribute('aria-pressed', 'false'));
+  $$('[data-rec]').forEach(host => host.__reset && host.__reset());
+  if (MODE === 'interviewer') state.answers.interviewer = $('#interviewer').value.trim();
+}
+
+/* ---------- recorder ---------- */
+function pickMime() {
+  const opts = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/aac'];
+  if (!window.MediaRecorder) return '';
+  return opts.find(m => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || '';
+}
+let micStream = null;
+async function getMic() {
+  if (micStream && micStream.getTracks().some(t => t.readyState === 'live')) return micStream;
+  micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+  return micStream;
+}
+
+function buildRecorder(host, q) {
+  host.innerHTML = `
+    <div class="rec">
+      <button class="recbtn" type="button">REC</button>
+      <div class="recinfo"><span class="msg">Tap to record (up to ${MAX_SECONDS / 60} min)</span></div>
+    </div>`;
+  const btn = $('.recbtn', host), info = $('.recinfo', host);
+  let rec = null, chunks = [], t0 = 0, timer = null;
+
+  function showIdle() {
+    btn.classList.remove('live'); btn.textContent = clips[q] ? 'REDO' : 'REC';
+    if (clips[q]) {
+      info.innerHTML = `<strong>Recorded · ${clips[q].secs}s</strong>
+        <audio controls preload="metadata" src="${clips[q].url}"></audio>
+        <button class="link del" type="button">Delete recording</button>`;
+      $('.del', info).onclick = () => { URL.revokeObjectURL(clips[q].url); delete clips[q]; showIdle(); };
+    } else {
+      info.innerHTML = `<span class="msg">Tap to record (up to ${MAX_SECONDS / 60} min)</span>`;
+    }
+  }
+  host.__reset = showIdle;
+
+  function stop() { if (rec && rec.state === 'recording') rec.stop(); }
+
+  btn.onclick = async () => {
+    if (rec && rec.state === 'recording') return stop();
+    if (!window.MediaRecorder || !navigator.mediaDevices) {
+      info.innerHTML = '<span class="msg">Voice recording isn\'t supported in this browser — please type below.</span>';
+      return;
+    }
+    try {
+      const stream = await getMic();
+      const mime = pickMime();
+      rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      chunks = [];
+      rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+      rec.onstop = () => {
+        clearInterval(timer);
+        const type = rec.mimeType || mime || 'audio/webm';
+        const blob = new Blob(chunks, { type });
+        if (clips[q]) URL.revokeObjectURL(clips[q].url);
+        if (blob.size > 0) clips[q] = { blob, mime: type, url: URL.createObjectURL(blob), secs: Math.round((Date.now() - t0) / 1000) };
+        showIdle();
+      };
+      rec.start(1000);
+      t0 = Date.now();
+      btn.classList.add('live'); btn.textContent = 'STOP';
+      const tick = () => {
+        const s = Math.floor((Date.now() - t0) / 1000);
+        info.innerHTML = `<strong>● ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}</strong> recording… tap STOP when done`;
+        if (s >= MAX_SECONDS) stop();
+      };
+      tick(); timer = setInterval(tick, 500);
+    } catch (e) {
+      info.innerHTML = '<span class="msg">Microphone blocked. Allow mic access in your browser settings, or type below.</span>';
+    }
+  };
+  showIdle();
+}
+
+/* ---------- navigation ---------- */
+function render() {
+  $$('section').forEach(s => s.classList.toggle('on', s.dataset.step === STEPS[step]));
+  const qIdx = step;           // 0..6
+  $('#bar').style.width = Math.round((qIdx / (STEPS.length - 1)) * 100) + '%';
+  $('#stepLabel').textContent = STEPS[step] === 'done' ? '' : `${step + 1}/${STEPS.length - 1}`;
+  const back = $('#backBtn'), next = $('#nextBtn');
+  back.style.display = (step === 0 || STEPS[step] === 'done') ? 'none' : '';
+  next.textContent = { intro: 'Start', q4: 'Submit', done: MODE === 'interviewer' ? 'Next investor' : 'Start over' }[STEPS[step]] || 'Next';
+  $('#err').textContent = '';
+  window.scrollTo(0, 0);
+}
+
+function validate() {
+  const a = state.answers, s = STEPS[step];
+  if (s === 'intro' && MODE === 'interviewer' && !a.interviewer) return 'Add the interviewer name.';
+  if (s === 'about' && !a.name && !a.email) return 'Add at least a name or an email.';
+  if (a.email && s === 'about' && !/^\S+@\S+\.\S+$/.test(a.email)) return 'That email looks off.';
+  return '';
+}
+
+$('#backBtn').onclick = () => { stopAllRecording(); if (step > 0) { step--; render(); } };
+$('#nextBtn').onclick = async () => {
+  stopAllRecording();
+  const msg = validate();
+  if (msg) { $('#err').textContent = msg; return; }
+  const s = STEPS[step];
+  if (s === 'q4') { await submit(); return; }
+  if (s === 'done') { resetForm(); step = 0; render(); return; }
+  step++; render();
+};
+
+function stopAllRecording() { $$('.recbtn.live').forEach(b => b.click()); }
+
+/* ---------- submit + outbox ---------- */
+function blobToBase64(blob) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).split(',')[1] || '');
+    r.onerror = () => rej(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+
+async function submit() {
+  const next = $('#nextBtn');
+  next.disabled = true; next.textContent = 'Saving…';
+  // Wait a beat in case a recording was just stopped and is still finalizing.
+  await new Promise(r => setTimeout(r, 400));
+  const audio = {};
+  for (const q of Object.keys(clips)) {
+    audio[q] = { mime: clips[q].mime, base64: await blobToBase64(clips[q].blob) };
+  }
+  const payload = {
+    id: state.id, mode: MODE, answers: state.answers, audio,
+    startedAt: state.startedAt, submittedAt: new Date().toISOString(), userAgent: navigator.userAgent
+  };
+  await outboxPut(payload);           // saved on the phone first, so nothing is lost
+  const sent = await send(payload);
+  next.disabled = false;
+  step = STEPS.indexOf('done'); render();
+  $('#doneStatus').innerHTML = sent
+    ? '<span class="status-ok">Your answers are in.</span>'
+    : '<span class="status-warn">Saved on this phone — it will upload automatically when the connection is back.</span>';
+  refreshOutbox();
+}
+
+async function send(payload) {
+  if (!ENDPOINT) return false;
+  try {
+    const r = await fetch(ENDPOINT, { method: 'POST', body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+    const j = await r.json();
+    if (j && j.ok) { await outboxDel(payload.id); return true; }
+    return false;
+  } catch (_) { return false; }
+}
+
+let flushing = false;
+async function flushOutbox() {
+  if (flushing) return; flushing = true;
+  try { for (const item of await outboxAll()) await send(item); }
+  finally { flushing = false; refreshOutbox(); }
+}
+async function refreshOutbox() {
+  const n = (await outboxAll()).length;
+  const b = $('#outboxBanner');
+  if (!ENDPOINT) { b.style.display = 'block'; $('#outboxText').textContent = 'Setup: no backend URL configured — responses stay on this device.'; $('#retryBtn').hidden = true; return; }
+  b.style.display = n ? 'block' : 'none';
+  $('#outboxText').textContent = `${n} response${n === 1 ? '' : 's'} waiting to upload.`;
+}
+$('#retryBtn').onclick = flushOutbox;
+window.addEventListener('online', flushOutbox);
+
+/* ---------- boot ---------- */
+if (MODE === 'interviewer') {
+  $('#interviewerCard').hidden = false;
+  $('#modeTag').textContent = 'Interviewer';
+  const saved = ls.get('nybci-interviewer');
+  if (saved) { $('#interviewer').value = saved; state.answers.interviewer = saved; }
+  $('#interviewer').addEventListener('change', e => ls.set('nybci-interviewer', e.target.value.trim()));
+} else {
+  $('#modeTag').textContent = 'Survey';
+}
+bindInputs();
+render();
+flushOutbox();
+setInterval(flushOutbox, 60000);
+</script>
+</body>
+</html>
